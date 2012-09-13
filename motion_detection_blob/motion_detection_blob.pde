@@ -78,10 +78,10 @@ void draw() {
 //    println("detected "+ blobs.length + " blobs");
     
     
-    if(millis()-lastBackgroundSavedTime > 5000){
+//    if(millis()-lastBackgroundSavedTime > 5000){
        opencv.remember();  
-       lastBackgroundSavedTime = millis();
-    }
+//       lastBackgroundSavedTime = millis();
+//    }
         
 
 
@@ -134,22 +134,24 @@ void draw() {
     }
     popMatrix();
     
-    if (blobAreaTotal > w*h*0.2 && millis()-lastBigMoveTime > 4000) { //moved area is more than 20% of whole frame. once it happened, ignore it for 4 sec.
+//    if (blobAreaTotal > w*h*0.2 && millis()-lastBigMoveTime > 4000) { //moved area is more than 20% of whole frame. once it happened, ignore it for 4 sec.
+    if (blobAreaTotal > w*h*0.2) { //moved area is more than 20% of whole frame. once it happened, ignore it for 4 sec.
+
       println("big move");
-      lastBigMoveTime = millis();
-      bigMove = true;
+//      lastBigMoveTime = millis();
+//      bigMove = true;
     }else{
       println(" ");
-      bigMove = false;
+//      bigMove = false;
     } 
     
     
-    if(bigMove){
-        font2 = loadFont("AndaleMono-48.vlw");
-        textFont(font2);
-        fill(255);
-        text( blobAreaTotal,50, 50);
-    }
+//    if(bigMove){
+//        font2 = loadFont("AndaleMono-48.vlw");
+//        textFont(font2);
+//        fill(255);
+//        text( blobAreaTotal,50, 50);
+//    }
     
 }
 

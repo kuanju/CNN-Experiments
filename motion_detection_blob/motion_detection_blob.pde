@@ -1,5 +1,6 @@
 /*
 Altered from openCV blob example. 
+opencv library: http://ubaa.net/shared/processing/opencv/index.html
 
 9/12: changing background reference every 5 seconds.
       printing out number of found blob.
@@ -11,6 +12,9 @@ Altered from openCV blob example.
 9/13: add big move notice
       delete 5 second timer, 4 second timer
       print out area difference in blob.
+      rearrange layout (only showing last frame and difference)
+      add sample rate = framerate = 5 fps.
+      add graphic showing the blob total area change.
       
 */
 
@@ -19,16 +23,13 @@ import java.awt.Rectangle;
 import java.awt.Point;
 
 
-
 OpenCV opencv;
 
 int w = 320;
 int h = 240;
-int threshold = 80;
-
-//long lastBackgroundSavedTime = millis();
-//long lastBigMoveTime = millis();
-//boolean bigMove = false;
+int threshold = 80;    
+int blobTotalArea = 0;  //total pixel sum in blobs.
+int[] blobTotalAreaRecords = new int[w*2+30];
 
 boolean find=true;
 
@@ -37,58 +38,48 @@ PFont font2;
 
 void setup() {
 
-    size( w*2+30, h*2+30);
+    size( w*2+30, h+30+50);
+    frameRate(5); // excute 20 times draw function per seconds. also means 5 fps of reference background sampling rate.
 
     opencv = new OpenCV( this );
     opencv.capture(w,h);
     
     font = loadFont( "AndaleMono.vlw" );
-    font2 = loadFont( "AndaleMono-48.vlw" );
+//    font2 = loadFont( "AndaleMono-48.vlw" );
 
     textFont( font );
 
-//    println( "Drag mouse inside sketch window to change threshold" );
+//  println( "Drag mouse inside sketch window to change threshold" );
     println( "Press space bar to record background image" );
-
+    opencv.remember();  // first reference. 
 }
 
 
 
 void draw() {
   
-    int blobAreaTotal = 0;
-
+    int areaSum = 0;  //local variable of blob area add up
 
     background(0);
+
+
     opencv.read();
     //opencv.flip( OpenCV.FLIP_HORIZONTAL );
-
-//    image( opencv.image(), 10, 10 );	             // RGB image
-//    image( opencv.image(OpenCV.GRAY), 20+w, 10 );   // GRAY image
-    image( opencv.image(OpenCV.MEMORY), 10, 20+h ); // image in memory
-
     opencv.absDiff();
     opencv.threshold(threshold);
-    image( opencv.image(OpenCV.GRAY), 20+w, 20+h ); // absolute difference image
+    image( opencv.image(OpenCV.MEMORY), 10, 20 ); // image in memory
+    image( opencv.image(), 20+w, 20 ); // absolute difference image (substracted)
+    opencv.remember();// for next time reference.
 
 
     // working with blobs
     Blob[] blobs = opencv.blobs( 100, w*h/3, 20, false );
-    //blobs(minArea, maxArea, maxBlobs, findHoles);
-//    println("detected "+ blobs.length + " blobs");
-    
-    
-//    if(millis()-lastBackgroundSavedTime > 5000){
-       opencv.remember();  
-//       lastBackgroundSavedTime = millis();
-//    }
-        
-
+    //blobs(minArea, maxArea, maxBlobs, findHoles);            
 
     noFill();
 
     pushMatrix();
-    translate(20+w,20+h);
+    translate(20+w,20);
     
     for( int i=0; i<blobs.length; i++ ) {
 
@@ -100,7 +91,7 @@ void draw() {
         Point centroid = blobs[i].centroid;
         Point[] points = blobs[i].points;
         
-        blobAreaTotal += area;
+        areaSum += area;
 
         // rectangle
         noFill();
@@ -134,25 +125,24 @@ void draw() {
     }
     popMatrix();
     
-//    if (blobAreaTotal > w*h*0.2 && millis()-lastBigMoveTime > 4000) { //moved area is more than 20% of whole frame. once it happened, ignore it for 4 sec.
-    if (blobAreaTotal > w*h*0.2) { //moved area is more than 20% of whole frame. once it happened, ignore it for 4 sec.
+    blobTotalArea = int(float(areaSum)/(w*h)*100);
+    println(hour()+":"+minute()+":"+second()+"  "+blobTotalArea);
+//
+    for(int i = 0; i < blobTotalAreaRecords.length-1; i++){ //shift blobtotalarea array by one item 
+      blobTotalAreaRecords[i] = blobTotalAreaRecords[i+1];  //and push new blobTotalArea to the last one 
+//      println(blobTotalAreaRecords[i]);
+    }
+     blobTotalAreaRecords[blobTotalAreaRecords.length-1] = blobTotalArea;
 
-      println("big move");
-//      lastBigMoveTime = millis();
-//      bigMove = true;
-    }else{
-      println(" ");
-//      bigMove = false;
-    } 
+    for(int i = 0; i < blobTotalAreaRecords.length; i++){
+         stroke(255);
+      line(i, height,i, height-(blobTotalAreaRecords[i]));
+    }
     
-    
-//    if(bigMove){
-//        font2 = loadFont("AndaleMono-48.vlw");
-//        textFont(font2);
-//        fill(255);
-//        text( blobAreaTotal,50, 50);
-//    }
-    
+    if (blobTotalArea > 20) { //moved area is more than 20% of whole frame.
+      println("===============big move===============");
+    }
+
 }
 
 void keyPressed() {

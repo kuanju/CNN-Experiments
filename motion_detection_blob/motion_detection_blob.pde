@@ -28,7 +28,7 @@ OpenCV opencv;
 int w = 320;
 int h = 240;
 int threshold = 80;    
-int blobTotalArea = 0;  //total pixel sum in blobs.
+int blobTotalArea = 0;  //total pixel sum in blobs %percentage.
 int[] blobTotalAreaRecords = new int[w*2+30];
 
 boolean find=true;
@@ -38,7 +38,7 @@ PFont font2;
 
 void setup() {
 
-    size( w*2+30, h+30+50);
+    size( w*2+30, h+30+50, P2D);
     frameRate(5); // excute 20 times draw function per seconds. also means 5 fps of reference background sampling rate.
 
     opencv = new OpenCV( this );

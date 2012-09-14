@@ -3,7 +3,6 @@
  * saving difference area into a PImage call diffImg.
 
  * 9/14 add camera name for logitech cam
- * mode1:using color difference as an indicator
  * mode2:using color change threshold to determine the number of pixels that
  * was changed and over the threshold.
 */
@@ -19,9 +18,10 @@ PImage diffImg = createImage(w, h, RGB);
 int numPixels; //total number of camera frame pixels
 int[] lastFramePixels; // an array for storing background reference pixels
 
-int diffColorSum = 0; // sum of color value difference in percentage
-int diffColorThreshold = 20;
-int[] diffColorSumRecords = new int[w*2+30];
+int diffColorThreshold = 30; //255*3*0.04
+int diffPixelSum = 0; // total number of pixel that has changed over threshold in percentage
+int[] diffPixelSumRecords = new int[w*2+30];
+
 
 int mode = 1; //* mode1:using color difference as an indicator
               //* mode2:using color change threshold to determine the number of pixels that
@@ -30,10 +30,10 @@ int mode = 1; //* mode1:using color difference as an indicator
 
 void setup(){
   frameRate(5);
-  size(w*2+30, h+30+50, P2D); //P2D is faster default renderer JAVA2D, WHY?
+  size(w*2+30, h+30+50); //P2D is faster default renderer JAVA2D, WHY?
   background(0);
   
-  cam = new Capture(this,320, 240,"Logitech Camera", 15);//Capture(parent, requestWidth,requestHeight, cameraName, frameRate)
+  cam = new Capture(this, 320, 240,"Logitech Camera", 15);//Capture(parent, requestWidth,requestHeight, cameraName, frameRate)
 
   cam.start();
   numPixels = w * h;
@@ -44,6 +44,8 @@ void setup(){
 }
 
 void draw(){
+  
+  
   background(0);
   
   if (cam.available() == true) {  //SAME AS void captureEvent(capture c){ c.read(); }
@@ -52,7 +54,6 @@ void draw(){
   }
   
   // Difference between the current frame and the stored background
-  int diffColor = 0;
   int diffPixel = 0;
   
   for(int i = 0 ; i < numPixels; i++ ){// For each pixel in the video frame...
@@ -73,8 +74,11 @@ void draw(){
       int diffG = abs(currG - lastG);
       int diffB = abs(currB - lastB);
       // Add these differences to the running tally
-      diffColor += (diffR + diffG + diffB);
-   
+
+      
+      if( diffR+diffG+diffB > diffColorThreshold){
+        diffPixel++;
+      }
       // Render the difference image to the screen
       // pixels[i] = color(diffR, diffG, diffB);
       // The following line does the same thing much faster, but is more technical
@@ -85,34 +89,35 @@ void draw(){
     image(cam,10,20);
     image(diffImg, w+20,20); 
     
+//    println(diffPixel);
+    
+    diffPixelSum = int(float(diffPixel)/(w*h)*100);
+    println(hour()+":"+minute()+":"+second()+"  "+diffPixelSum); // Print out the total amount of movement
   
-  
-    diffColorSum = int(float(diffColor)/(w*h*255*3)*100); //compare to 100% change: all pixels * rgb 255
-    println(hour()+":"+minute()+":"+second()+"  "+diffColorSum); // Print out the total amount of movement
 
-   for(int i = 0; i < diffColorSumRecords.length-1; i++){ //shift difftotalarea array by one item 
-      diffColorSumRecords[i] = diffColorSumRecords[i+1];  //and push new diffTotalArea to the last one 
-  }
-     diffColorSumRecords[diffColorSumRecords.length-1] = diffColorSum;
-
+    if(diffPixelSum <60){
+    for(int i = 0; i < diffPixelSumRecords.length-1; i++){ //shift difftotalarea array by one item 
+      diffPixelSumRecords[i] = diffPixelSumRecords[i+1];  //and push new diffTotalArea to the last one 
+     }
+      diffPixelSumRecords[diffPixelSumRecords.length-1] = diffPixelSum;
+    }
+    
     drawLines();
 
-    if (diffColorSum > 20) { //moved area is more than 20% of whole frame.
-      println("===============big move===============");
-    }
   }
   
   
-  void mousePressed(){
+ 
+
   
-    //change mode.
-    
-  }
-  
-  
-  void drawLines(){
-    for(int i = 0; i < diffColorSumRecords.length; i++){
+void drawLines(){
+   
+  for(int i = 0; i < diffPixelSumRecords.length; i++){
+      if(diffPixelSumRecords[i]>6){
+      stroke(255,0,0);
+    }else{
       stroke(255);
-      line(i, height,i, height-(diffColorSumRecords[i]));
     }
+      line(i, height,i, height-(diffPixelSumRecords[i])*3);
   }
+}

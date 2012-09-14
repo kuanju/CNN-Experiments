@@ -38,7 +38,7 @@ PFont font2;
 
 void setup() {
 
-    size( w*2+30, h+30+50, P2D);
+    size( w*2+30, h+30+50);
     frameRate(5); // excute 20 times draw function per seconds. also means 5 fps of reference background sampling rate.
 
     opencv = new OpenCV( this );
@@ -125,23 +125,21 @@ void draw() {
     }
     popMatrix();
     
-    blobTotalArea = int(float(areaSum)/(w*h)*100);
+    blobTotalArea = int(float(areaSum)/(w*h)*1000);
     println(hour()+":"+minute()+":"+second()+"  "+blobTotalArea);
-//
+//    println(float(areaSum)/(w*h)*100);
+
     for(int i = 0; i < blobTotalAreaRecords.length-1; i++){ //shift blobtotalarea array by one item 
       blobTotalAreaRecords[i] = blobTotalAreaRecords[i+1];  //and push new blobTotalArea to the last one 
 //      println(blobTotalAreaRecords[i]);
     }
      blobTotalAreaRecords[blobTotalAreaRecords.length-1] = blobTotalArea;
-
-    for(int i = 0; i < blobTotalAreaRecords.length; i++){
-         stroke(255);
-      line(i, height,i, height-(blobTotalAreaRecords[i]));
-    }
     
-    if (blobTotalArea > 20) { //moved area is more than 20% of whole frame.
+    if (blobTotalArea > 30) { //moved area is more than 20% of whole frame.
       println("===============big move===============");
     }
+    
+    drawlines();
 
 }
 
@@ -152,6 +150,18 @@ void keyPressed() {
 void mouseDragged() {
 //    threshold = int( map(mouseX,0,width,0,255) );
 }
+
+void drawlines(){
+      for(int i = 0; i < blobTotalAreaRecords.length; i++){
+      if(blobTotalAreaRecords[i]>30){
+         stroke(255,0,0);
+      }else{
+         stroke(255);
+      }
+      line(i, height,i, height-(blobTotalAreaRecords[i]));
+    }
+}
+
 
 public void stop() {
     opencv.stop();
